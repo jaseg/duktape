@@ -39,6 +39,12 @@
 
 #define DUK_USE_PACK_MSVC_PRAGMA
 
+#if 1  /* FIXME: correct condition */
+#define DUK_NOINLINE        __declspec(noinline)
+#define DUK_INLINE          __inline
+#define DUK_ALWAYS_INLINE   __forceinline
+#endif
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1900)
 #define DUK_SNPRINTF     snprintf
 #define DUK_VSNPRINTF    vsnprintf
