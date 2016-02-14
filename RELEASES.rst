@@ -1408,6 +1408,9 @@ Planned
 * Internal performance improvement: use raw value stack accessors internally
   when it's safe to do so (GH-582)
 
+* Internal performance improvement: add optional fast path for dense arrays in
+  Array.prototype operations like push() and pop() (GH-FIXME)
+
 2.0.0 (XXXX-XX-XX)
 ------------------
 
