@@ -347,11 +347,75 @@ DUK_INTERNAL duk_ret_t duk_bi_array_prototype_join_shared(duk_context *ctx) {
  *  pop(), push()
  */
 
+DUK_LOCAL duk_hobject *duk__arraypart_fastpath_this(duk_context *ctx) {
+	duk_hthread *thr;
+	duk_tval *tv;
+	duk_hobject *h;
+
+	thr = (duk_hthread *) ctx;
+	DUK_ASSERT(thr->valstack_bottom > thr->valstack);  /* because call in progress */
+	tv = thr->valstack_bottom - 1;  /* FIXME: macro */
+
+	if (!DUK_TVAL_IS_OBJECT(tv)) {
+		return NULL;
+	}
+	h = DUK_TVAL_GET_OBJECT(tv);
+	DUK_ASSERT(h != NULL);
+	if (!(DUK_HOBJECT_HAS_ARRAY_PART(h) && DUK_HOBJECT_HAS_EXOTIC_ARRAY(h))) {
+		return NULL;
+	}
+
+	duk_push_tval(ctx, tv);  /* FIXME: awkward */
+	return h;
+}
+
+DUK_LOCAL duk_ret_t duk__array_pop_arraypart(duk_context *ctx, duk_hobject *h_arr) {
+	duk_hthread *thr;
+	duk_tval *tv_len;
+	duk_tval *tv_arraypart;
+	duk_double_t len;
+
+	thr = (duk_hthread *) ctx;
+
+	/* FIXME: guarantee length slot? */
+	tv_len = duk_hobject_find_existing_entry_tval_ptr(thr->heap, h_arr, DUK_HTHREAD_STRING_LENGTH(thr));
+	DUK_ASSERT(tv_len);  /* C API could circumvent this; worth checking? */
+	DUK_ASSERT(DUK_TVAL_IS_NUMBER(tv_len));  /* .length semantics */
+	len = DUK_TVAL_GET_NUMBER(tv_len);
+	/* FIXME: fastint assert? */
+
+	tv_arraypart = DUK_HOBJECT_A_GET_BASE(thr->heap, h_arr);
+	DUK_ASSERT(tv_arraypart != NULL);
+	DUK_ASSERT(DUK_TVAL_GET_NUMBER(tv_len) <= DUK_HOBJECT_GET_ASIZE(h_arr));
+
+	if (len <= 0) {
+		/* nop */
+		return 1;
+	}
+
+	len -= 1.0;
+	DUK_TVAL_SET_NUMBER(tv_len, len);  /* no refcount update, no side effects */
+	DUK_TVAL_SET_UNUSED_UPDREF(thr, tv_arraypart + (duk_int_t) len);
+
+	return 1;
+}
+
 DUK_INTERNAL duk_ret_t duk_bi_array_prototype_pop(duk_context *ctx) {
 	duk_uint32_t len;
 	duk_uint32_t idx;
+	duk_hobject *h_arr;
 
 	DUK_ASSERT_TOP(ctx, 0);
+
+#if 1
+	h_arr = duk__arraypart_fastpath_this(ctx);
+	if (h_arr) {
+		return duk__array_pop_arraypart(ctx, h_arr);
+	}
+#endif
+
+	/* FIXME: Merge fastpath check into a related call (push this, coerce length, etc) */
+
 	len = duk__push_this_obj_len_u32(ctx);
 	if (len == 0) {
 		duk_push_int(ctx, 0);
@@ -376,6 +440,11 @@ DUK_INTERNAL duk_ret_t duk_bi_array_prototype_push(duk_context *ctx) {
 
 	duk_uint32_t len;
 	duk_idx_t i, n;
+
+	/* FIXME: fast path will need some kind of 'guarantee space' operation
+	 * for the array part.  Perhaps combine a "lookup and extend" into a
+	 * helper?
+	 */
 
 	n = duk_get_top(ctx);
 	len = duk__push_this_obj_len_u32(ctx);
