@@ -5,6 +5,10 @@
 DUK_INTERNAL_DECL double duk_computed_infinity;
 #endif
 
+/* FIXME: when compiling single file and DUK_INTERNAL and DUK_INTERNAL_DECL
+ * are both 'static' this is a redefinition, the declaration and definition
+ * have no difference.
+ */
 #if defined(DUK_USE_COMPUTED_NAN)
 DUK_INTERNAL_DECL double duk_computed_nan;
 #endif
