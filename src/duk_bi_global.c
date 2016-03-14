@@ -1089,6 +1089,7 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_require(duk_context *ctx) {
 	duk_xdef_prop_stridx(ctx, 9, DUK_STRIDX_EXPORTS, DUK_PROPDESC_FLAGS_WC);  /* module.exports = exports */
 	duk_dup(ctx, 3);  /* resolved id: require(id) must return this same module */
 	duk_xdef_prop_stridx(ctx, 9, DUK_STRIDX_ID, DUK_PROPDESC_FLAGS_NONE);  /* module.id = resolved_id */
+	/* FIXME: add .fileName default. */
 	duk_compact(ctx, 9);  /* module table remains registered to modLoaded, minimize its size */
 
 	/* [ requested_id require require.id resolved_id Duktape Duktape.modLoaded undefined fresh_require exports module ] */
@@ -1153,6 +1154,7 @@ DUK_INTERNAL duk_ret_t duk_bi_global_object_require(duk_context *ctx) {
 	 */
 	duk_push_string(ctx, "})");
 	duk_concat(ctx, 3);
+	/* FIXME: use module.fileName. */
 	duk_dup(ctx, 3);  /* resolved module ID for fileName */
 	duk_eval_raw(ctx, NULL, 0, DUK_COMPILE_EVAL);
 
