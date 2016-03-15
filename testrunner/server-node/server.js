@@ -2,6 +2,13 @@
  *  Testrunner server.
  */
 
+// FIXME: separate contexts in web UI; identify client by human readable name (e.g. "OS X testclient"
+// FIXME: minimal web UI styling (tables mainly, zebra pattern, margins)
+// FIXME: add webhook identifier to allow retriggering
+// FIXME: prefer newest webhook when possible (useful for successive forced pushes)
+// FIXME: plain http port
+// FIXME: separate script exit code for "certain test failure" vs "other failure"; automatic server-driven retry
+
 var fs = require('fs');
 var yaml = require('yamljs');
 var express = require('express');
